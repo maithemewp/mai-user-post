@@ -3,7 +3,7 @@
 /**
  * Plugin Name:     Mai User Post
  * Plugin URI:      https://bizbudding.com
- * Description:     Connect a user to a post type for front end display via Mai Post Grid.
+ * Description:     A developer plugin to connect and sync a user to an individual custom post type entry.
  * Version:         0.1.0
  *
  * Author:          BizBudding, Mike Hemberger
@@ -143,9 +143,8 @@ final class Mai_User_Post_Plugin {
 	 */
 	public function hooks() {
 
-		add_action( 'admin_init',          [ $this, 'updater' ] );
-		add_action( 'init',                [ $this, 'register_content_types' ] );
-		add_filter( 'mai_grid_post_types', [ $this, 'grid_post_types' ] );
+		add_action( 'admin_init', [ $this, 'updater' ] );
+		add_action( 'init',       [ $this, 'register_content_types' ] );
 
 		register_activation_hook( __FILE__, [ $this, 'activate' ] );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
@@ -203,51 +202,42 @@ final class Mai_User_Post_Plugin {
 		 *  Custom Post Types  *
 		 ***********************/
 
-		register_post_type( 'mai_user', apply_filters( 'mai_user_post_type_args',
+		$plural   = apply_filters( 'maiup_post_type_plural', __( 'User Posts', 'mai-user-post' ) );
+		$singular = apply_filters( 'maiup_post_type_singular', __( 'User Post', 'mai-user-post' ) );
+		$base     = apply_filters( 'maiup_post_type_base', 'users' );
+
+		register_post_type( 'mai_user', apply_filters( 'maiup_post_type_args',
 			[
 				'exclude_from_search' => false,
-				'has_archive'         => false,
+				'has_archive'         => true,
 				'hierarchical'        => false,
 				'labels'              => [
-					'name'               => _x( 'User Posts', 'User general name'        , 'mai-user-post' ),
-					'singular_name'      => _x( 'User Post' , 'User singular name'       , 'mai-user-post' ),
-					'menu_name'          => _x( 'User Posts', 'User admin menu'          , 'mai-user-post' ),
-					'name_admin_bar'     => _x( 'User Post' , 'User add new on admin bar', 'mai-user-post' ),
-					'add_new'            => _x( 'Add New'  , 'User add new'              , 'mai-user-post' ),
-					'add_new_item'       => __( 'Add New User'                           , 'mai-user-post' ),
-					'new_item'           => __( 'New User'                               , 'mai-user-post' ),
-					'edit_item'          => __( 'Edit User'                              , 'mai-user-post' ),
-					'view_item'          => __( 'View User'                              , 'mai-user-post' ),
-					'all_items'          => __( 'All User Posts'                         , 'mai-user-post' ),
-					'search_items'       => __( 'Search User Posts'                      , 'mai-user-post' ),
-					'parent_item_colon'  => __( 'Parent User Posts:'                     , 'mai-user-post' ),
-					'not_found'          => __( 'No User Posts found.'                   , 'mai-user-post' ),
-					'not_found_in_trash' => __( 'No User Posts found in Trash.'          , 'mai-user-post' )
+					'name'               => $plural,
+					'singular_name'      => $singular,
+					'menu_name'          => $plural,
+					'name_admin_bar'     => $singular,
+					'add_new'            => __( 'Add New', 'mai-user-post' ),
+					'add_new_item'       => __( 'Add New', 'mai-user-post' ),
+					'new_item'           => __( 'New', 'mai-user-post' ) . ' ' . $singular,
+					'edit_item'          => __( 'Edit', 'mai-user-post' ) . ' ' . $singular,
+					'view_item'          => __( 'View', 'mai-user-post' ) . ' ' . $singular,
+					'all_items'          => __( 'All', 'mai-user-post' ) . ' ' . $plural,
+					'search_items'       => __( 'Search', 'mai-user-post' ) . ' ' . $plural,
+					'parent_item_colon'  => __( 'Parent', 'mai-user-post' ) . ' ' . $plural,
+					'not_found'          => __( 'No', 'mai-user-post' ) . ' ' . $plural . ' ' . __( 'found', 'mai-user-post' ),
+					'not_found_in_trash' => __( 'No', 'mai-user-post' ) . ' ' . $plural . ' ' . __( 'found in trash', 'mai-user-post' ),
 				],
 				'menu_icon'          => 'dashicons-admin-users',
-				'public'             => false,
-				'publicly_queryable' => false,
+				'public'             => true,
+				'publicly_queryable' => true,
 				'show_in_menu'       => true,
 				'show_in_nav_menus'  => false,
-				// 'show_in_rest'       => true,
+				'show_in_rest'       => true,
 				'show_ui'            => true,
-				'rewrite'            => false,
-				// 'supports'           => [ 'title', 'editor', 'author', 'page-attributes', 'thumbnail' ],
-				'supports'           => [ 'title', 'editor', 'page-attributes', 'thumbnail' ],
+				'rewrite'            => [ 'slug' => 'users', 'with_front' => false ],
+				'supports'           => [ 'title', 'editor', 'excerpt', 'thumbnail', 'page-attributes', 'genesis-cpt-archives-settings', 'genesis-layouts', 'mai-archive-settings', 'mai-single-settings' ],
 			]
 		) );
-	}
-
-	/**
-	 * Add 'mai_user' as an available post type for Mai Post Grid.
-	 *
-	 * @param array $post_types The existing post types.
-	 *
-	 * @return array
-	 */
-	function grid_post_types( $post_types ) {
-		$post_types[] = 'mai_user';
-		return $post_types;
 	}
 
 	/**
