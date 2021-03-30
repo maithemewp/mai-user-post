@@ -60,7 +60,18 @@ function maiup_get_acf_keys() {
  * @return void
  */
 function maiup_sync_user_post( $user_id ) {
-	$should_sync = apply_filters( 'maiup_should_sync', false, $user_id );
+	$user_roles = maiup_get_user_roles();
+
+	if ( $user_roles ) {
+		$user_meta  = get_userdata( $user_id );
+		$has_role   = (bool) array_intersect( $user_meta->roles, $user_roles );
+
+		if ( ! $has_role ) {
+			return;
+		}
+	}
+
+	$should_sync = apply_filters( 'maiup_should_sync', true, $user_id );
 
 	if ( ! $should_sync ) {
 		return;
@@ -201,4 +212,23 @@ function maiup_get_user_post( $user_id ) {
  */
 function maiup_get_user_slug( $user_id ) {
 	return sprintf( 'user-%s', $user_id );
+}
+
+/**
+ * Gets the roles to sync.
+ *
+ * @since 0.1.0
+ *
+ * @return string
+ */
+function maiup_get_user_roles() {
+	static $user_roles = null;
+
+	if ( ! is_null( $user_roles ) ) {
+		return $user_roles;
+	}
+
+	$user_roles = (array) apply_filters( 'maiup_user_roles', [] );
+
+	return $user_roles;
 }

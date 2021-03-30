@@ -9,7 +9,7 @@ add_action( 'admin_menu', 'maiup_add_sync_page' );
 function maiup_add_sync_page() {
 	add_options_page(
 		__( 'Mai User Post Sync', 'mai-user-post' ),
-		__( 'Mai User Post Sync', 'mai-user-post' ),
+		__( 'Mai User Post', 'mai-user-post' ),
 		'manage_options',
 		'mai_user_post',
 		'maiup_settings_page'
@@ -72,14 +72,19 @@ function mai_user_post_sync_action() {
 
 	if ( current_user_can( 'manage_options' ) && $referrer && $nonce && $action && wp_verify_nonce( $nonce, $action ) ) {
 
-		$redirect = admin_url( 'options-general.php?page=mai_user_post' );
-		$number   = 250;
-		$args     = apply_filters( 'maiup_user_query_args',
-			[
-				'number' => $number,
-				'offset' => $offset,
-			]
-		);
+		$redirect   = admin_url( 'options-general.php?page=mai_user_post' );
+		$number     = 250;
+		$user_roles = maiup_get_user_roles();
+		$args       = [
+			'number' => $number,
+			'offset' => $offset,
+		];
+
+		if ( $user_roles ) {
+			$args['role__in'] = $user_roles;
+		}
+
+		$args = apply_filters( 'maiup_user_query_args', $args );
 
 		$users = new WP_User_Query( $args );
 		$users = $users->get_results();
