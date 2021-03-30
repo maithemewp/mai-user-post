@@ -234,7 +234,7 @@ final class Mai_User_Post_Plugin {
 				'show_in_nav_menus'  => false,
 				'show_in_rest'       => true,
 				'show_ui'            => true,
-				'rewrite'            => [ 'slug' => 'users', 'with_front' => false ],
+				'rewrite'            => [ 'slug' => $base, 'with_front' => false ],
 				'supports'           => [ 'title', 'editor', 'excerpt', 'thumbnail', 'page-attributes', 'genesis-cpt-archives-settings', 'genesis-layouts', 'mai-archive-settings', 'mai-single-settings' ],
 			]
 		) );
