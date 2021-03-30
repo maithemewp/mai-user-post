@@ -3,7 +3,7 @@ A developer plugin to connect and sync a user to an individual custom post type 
 
 This plugin requires PHP filters in order to use. See below.
 
-## Enable user roles
+## Enable user roles (required)
 `maiup_user_roles`
 
 In order for any user and user entry to be created and/or synced you need to enable a user role or roles via the following filter.
@@ -29,11 +29,6 @@ By default, Mai User Post creates and syncs the following data both ways.
 | Display Name        |   Title |
 | Biography           | Excerpt |
 | `post_content` meta | Content |
-
-```
-// Filter args.
-$args = apply_filters( 'maiup_user_post_args', $args, $user_id );
-```
 
 ## Add sync data
 `maiup_meta_keys`
