@@ -7,10 +7,10 @@
  *
  * @return
  */
-add_action( 'user_register',      'maiup_sync_user_post', 99 );
-add_action( 'profile_update',     'maiup_sync_user_post', 99 );
-add_action( 'edit_post_mai_user', 'maiup_sync_post_user', 99, 2 );
-add_action( 'delete_user',        'maiup_delete_user_post' );
+add_action( 'user_register',        'maiup_sync_user_post', 99 );
+add_action( 'profile_update',       'maiup_sync_user_post', 99 );
+add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
+add_action( 'delete_user',          'maiup_delete_user_post' );
 
 /**
  * Gets meta keys to sync.
@@ -110,25 +110,35 @@ function maiup_sync_user_post( $user_id ) {
 		$post_id = $post->ID;
 	} else {
 		$post_id = maiup_create_user_post( $user_id );
+
+		if ( $post_id ) {
+			$post = get_post( $post_id );
+		}
 	}
 
-	if ( ! $post_id ) {
+	if ( ! ( $post_id && $post ) ) {
 		return;
 	}
 
 	$user = get_user_by( 'id', $user_id );
 
-	remove_action( 'edit_post_mai_user', 'maiup_sync_post_user', 99, 2 );
+	remove_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
 
-	wp_update_post(
-		[
-			'ID'           => $post_id,
-			'post_title'   => $user->display_name,
-			'post_excerpt' => $user->description,
-		]
-	);
+	$post_args = [
+		'ID'           => $post_id,
+		'post_title'   => $user->display_name,
+		'post_excerpt' => $user->description,
+	];
 
-	add_action( 'edit_post_mai_user', 'maiup_sync_post_user', 99, 2 );
+	$content = get_user_meta( $user_id, 'post_content', true );
+
+	if ( $content && ( $post->post_content !== $content ) ) {
+		$post_args['post_content'] = $content;
+	}
+
+	wp_update_post( $post_args );
+
+	add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
 
 	$meta_keys = maiup_get_meta_keys();
 
@@ -184,17 +194,20 @@ function maiup_sync_user_post( $user_id ) {
  *
  * @since 0.1.0
  *
- * @param int     $post_id The post ID.
- * @param WP_Post $post    The post object.
+ * @param int          $post_id     Post ID.
+ * @param WP_Post      $post        Post object.
+ * @param bool         $update      Whether this is an existing post being updated.
+ * @param null|WP_Post $post_before Null for new posts, the WP_Post object prior
+ *                                  to the update for updated posts.
  *
  * @return void
  */
-function maiup_sync_post_user( $post_id, $post ) {
+function maiup_sync_post_user( $post_id, $post, $update, $post_before ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 		return;
 	}
 
-	if ( 'trash' === $post->post_status ) {
+	if ( ! $update ) {
 		return;
 	}
 
@@ -244,7 +257,11 @@ function maiup_sync_post_user( $post_id, $post ) {
 	add_action( 'user_register', 'maiup_sync_user_post', 99 );
 	add_action( 'profile_update', 'maiup_sync_user_post', 99 );
 
-	update_user_meta( $user_id, 'post_content', $post->post_content );
+	$content = get_user_meta( $user_id, 'post_content', true );
+
+	if ( $post->post_content && ( $post->post_content !== $content ) ) {
+		update_user_meta( $user_id, 'post_content', $post->post_content );
+	}
 
 	$meta_keys = maiup_get_meta_keys();
 
