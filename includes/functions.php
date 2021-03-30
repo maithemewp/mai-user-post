@@ -124,7 +124,7 @@ function maiup_sync_user_post( $user_id ) {
 
 	remove_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
 
-	$post_args = [
+	$args = [
 		'ID'           => $post_id,
 		'post_title'   => $user->display_name,
 		'post_excerpt' => $user->description,
@@ -133,10 +133,14 @@ function maiup_sync_user_post( $user_id ) {
 	$content = get_user_meta( $user_id, 'post_content', true );
 
 	if ( $content && ( $post->post_content !== $content ) ) {
-		$post_args['post_content'] = $content;
+		$args['post_content'] = $content;
 	}
 
-	wp_update_post( $post_args );
+	$args = apply_filters( 'maiup_user_post_args', $args, $user_id );
+
+	ray( $args );
+
+	wp_update_post( $args );
 
 	add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
 
