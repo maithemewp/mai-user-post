@@ -56,7 +56,7 @@ function maiup_settings_page() {
 				admin_url( 'admin-post.php' )
 			);
 
-			$text     = __( 'Sync Users', 'mai-user-post' );
+			$text     = __( 'Sync Users to User Posts', 'mai-user-post' );
 			$classes  = 'button button-primary';
 			$continue = absint( filter_input( INPUT_GET, 'continue', FILTER_SANITIZE_NUMBER_INT ) );
 

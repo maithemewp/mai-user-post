@@ -128,7 +128,7 @@ add_filter( 'maiup_user_post_args', function( $args, $user_id ) {
 		$args['post_title'] = $company;
 	}
 	return $args;
-});
+}, 10, 2 );
 ```
 
 ## Post type args
