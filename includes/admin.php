@@ -1,18 +1,22 @@
 <?php
 
+add_action( 'admin_menu', 'maiup_add_sync_page' );
 /**
  * Add the sync page.
  *
  * @since 0.1.0
+ *
+ * @return void
  */
-add_action( 'admin_menu', 'maiup_add_sync_page' );
 function maiup_add_sync_page() {
-	add_options_page(
+	add_submenu_page(
+		'edit.php?post_type=mai_user',
 		__( 'Mai User Post Sync', 'mai-user-post' ),
-		__( 'Mai User Post', 'mai-user-post' ),
+		__( 'Bulk Sync', 'mai-user-post' ),
 		'manage_options',
 		'mai_user_post',
-		'maiup_settings_page'
+		'maiup_settings_page',
+		99
 	);
 }
 
@@ -20,6 +24,8 @@ function maiup_add_sync_page() {
  * Build the Settings page.
  *
  * @since 0.1.0
+ *
+ * @return void
  */
 function maiup_settings_page() {
 	echo '<div class="wrap">';
@@ -31,27 +37,39 @@ function maiup_settings_page() {
 			printf( '<div class="notice notice-success"><p>%s</p></div>', esc_html( $notice ) );
 		}
 
-		$sync_url = add_query_arg(
-			[
-				'action' => 'mai_user_post_sync_action',
-				'offset' => absint( filter_input( INPUT_GET, 'offset', FILTER_SANITIZE_NUMBER_INT ) ),
-			],
-			admin_url( 'admin-post.php' )
-		);
+		$roles = maiup_get_user_roles();
 
-		$text     = __( 'Sync Users', 'mai-user-post' );
-		$classes  = 'button button-primary';
-		$continue = absint( filter_input( INPUT_GET, 'continue', FILTER_SANITIZE_NUMBER_INT ) );
-
-		if ( $continue ) {
-			$text     = __( 'Continue Syncing Users', 'mai-user-post' );
-			$classes  = 'button';
-			$sync_url = add_query_arg( 'continue', $continue, $sync_url );
+		if ( $roles ) {
+			printf( '<p>%s <strong>%s</strong></p>', __( 'The following user role(s) will be synced:', 'mai-user-post' ), implode( ', ', $roles ) );
+		} else {
+			printf( '<div class="notice notice-warning"><p>%s</p></div>', __( 'There are no user roles set to be synced.', 'mai-user-post' ) );
+			printf( '<p>%s</p>', __( 'To enable user roles to be synced, please use the <code>maiup_user_roles</code> filter.', 'mai-user-post' ) );
 		}
 
-		$sync_url = wp_nonce_url( $sync_url, 'mai_user_post_sync_action', 'mai_user_post_sync_nonce' );
+		if ( $roles ) {
 
-		printf( '<p><a class="%s" href="%s">%s</a></p>', $classes, $sync_url, $text );
+			$sync_url = add_query_arg(
+				[
+					'action' => 'mai_user_post_sync_action',
+					'offset' => absint( filter_input( INPUT_GET, 'offset', FILTER_SANITIZE_NUMBER_INT ) ),
+				],
+				admin_url( 'admin-post.php' )
+			);
+
+			$text     = __( 'Sync Users', 'mai-user-post' );
+			$classes  = 'button button-primary';
+			$continue = absint( filter_input( INPUT_GET, 'continue', FILTER_SANITIZE_NUMBER_INT ) );
+
+			if ( $continue ) {
+				$text     = __( 'Continue Syncing Users', 'mai-user-post' );
+				$classes  = 'button';
+				$sync_url = add_query_arg( 'continue', $continue, $sync_url );
+			}
+
+			$sync_url = wp_nonce_url( $sync_url, 'mai_user_post_sync_action', 'mai_user_post_sync_nonce' );
+
+			printf( '<p><a class="%s" href="%s">%s</a></p>', $classes, $sync_url, $text );
+		}
 
 	echo '</div>';
 }
@@ -72,7 +90,7 @@ function mai_user_post_sync_action() {
 
 	if ( current_user_can( 'manage_options' ) && $referrer && $nonce && $action && wp_verify_nonce( $nonce, $action ) ) {
 
-		$redirect   = admin_url( 'options-general.php?page=mai_user_post' );
+		$redirect   = admin_url( 'edit.php?post_type=mai_user&page=mai_user_post' );
 		$number     = 250;
 		$user_roles = maiup_get_user_roles();
 		$args       = [
@@ -84,8 +102,7 @@ function mai_user_post_sync_action() {
 			$args['role__in'] = $user_roles;
 		}
 
-		$args = apply_filters( 'maiup_user_query_args', $args );
-
+		$args  = apply_filters( 'maiup_user_query_args', $args );
 		$users = new WP_User_Query( $args );
 		$users = $users->get_results();
 
@@ -124,7 +141,7 @@ function mai_user_post_sync_action() {
 		wp_die(
 			__( 'User posts failed to sync.', 'mai-user-post' ),
 			__( 'Error', 'mai-user-post' ), [
-				'link_url'  => admin_url( 'options-general.php?page=mai_user_post' ),
+				'link_url'  => admin_url( 'edit.php?post_type=mai_user&page=mai_user_post' ),
 				'link_text' => __( 'Go back.', 'mai-user-post' ),
 			]
 		);
