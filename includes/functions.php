@@ -138,8 +138,6 @@ function maiup_sync_user_post( $user_id ) {
 
 	$args = apply_filters( 'maiup_user_post_args', $args, $user_id );
 
-	ray( $args );
-
 	wp_update_post( $args );
 
 	add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
