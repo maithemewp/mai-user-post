@@ -70,8 +70,6 @@ function mai_user_post_sync_action() {
 	$action   = filter_input( INPUT_GET, 'action', FILTER_SANITIZE_STRING );
 	$offset   = absint( filter_input( INPUT_GET, 'offset', FILTER_SANITIZE_NUMBER_INT ) );
 
-
-
 	if ( current_user_can( 'manage_options' ) && $referrer && $nonce && $action && wp_verify_nonce( $nonce, $action ) ) {
 
 		$redirect = admin_url( 'options-general.php?page=mai_user_post' );

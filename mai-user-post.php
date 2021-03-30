@@ -64,7 +64,7 @@ final class Mai_User_Post_Plugin {
 	 */
 	public function __clone() {
 		// Cloning instances of the class is forbidden.
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'textdomain' ), '1.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'mai-user-post' ), '1.0' );
 	}
 
 	/**
@@ -76,7 +76,7 @@ final class Mai_User_Post_Plugin {
 	 */
 	public function __wakeup() {
 		// Unserializing instances of the class is forbidden.
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'textdomain' ), '1.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'mai-user-post' ), '1.0' );
 	}
 
 	/**
@@ -97,11 +97,6 @@ final class Mai_User_Post_Plugin {
 		if ( ! defined( 'MAI_USER_POST_PLUGIN_DIR' ) ) {
 			define( 'MAI_USER_POST_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 		}
-
-		// Plugin Classes Path.
-		// if ( ! defined( 'MAI_USER_POST_CLASSES_DIR' ) ) {
-		// 	define( 'MAI_USER_POST_CLASSES_DIR', MAI_USER_POST_PLUGIN_DIR . 'classes/' );
-		// }
 
 		// Plugin Includes Path.
 		if ( ! defined( 'MAI_USER_POST_INCLUDES_DIR' ) ) {
@@ -135,8 +130,6 @@ final class Mai_User_Post_Plugin {
 	private function includes() {
 		// Include vendor libraries.
 		// require_once __DIR__ . '/vendor/autoload.php';
-		// Classes.
-		// foreach ( glob( MAI_USER_POST_CLASSES_DIR . '*.php' ) as $file ) { include $file; }
 		// Includes.
 		foreach ( glob( MAI_USER_POST_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
 
@@ -152,7 +145,6 @@ final class Mai_User_Post_Plugin {
 
 		add_action( 'admin_init',          [ $this, 'updater' ] );
 		add_action( 'init',                [ $this, 'register_content_types' ] );
-		// add_action( 'plugins_loaded',      [ $this, 'setup' ] );
 		add_filter( 'mai_grid_post_types', [ $this, 'grid_post_types' ] );
 
 		register_activation_hook( __FILE__, [ $this, 'activate' ] );
@@ -181,23 +173,23 @@ final class Mai_User_Post_Plugin {
 			return;
 		}
 
-		// // Setup the updater.
-		// $updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/starter-plugin/', __FILE__, 'textdomain' );
+		// Setup the updater.
+		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/maithemewp/mai-user-post/', __FILE__, 'mai-user-post' );
 
-		// // Maybe set github api token.
-		// if ( defined( 'MAI_GITHUB_API_TOKEN' ) ) {
-		// 	$updater->setAuthentication( MAI_GITHUB_API_TOKEN );
-		// }
+		// Maybe set github api token.
+		if ( defined( 'MAI_GITHUB_API_TOKEN' ) ) {
+			$updater->setAuthentication( MAI_GITHUB_API_TOKEN );
+		}
 
-		// // Add icons for Dashboard > Updates screen.
-		// if ( function_exists( 'mai_get_updater_icons' ) && $icons = mai_get_updater_icons() ) {
-		// 	$updater->addResultFilter(
-		// 		function ( $info ) use ( $icons ) {
-		// 			$info->icons = $icons;
-		// 			return $info;
-		// 		}
-		// 	);
-		// }
+		// Add icons for Dashboard > Updates screen.
+		if ( function_exists( 'mai_get_updater_icons' ) && $icons = mai_get_updater_icons() ) {
+			$updater->addResultFilter(
+				function ( $info ) use ( $icons ) {
+					$info->icons = $icons;
+					return $info;
+				}
+			);
+		}
 	}
 
 	/**
@@ -245,15 +237,6 @@ final class Mai_User_Post_Plugin {
 			]
 		) );
 	}
-
-	/**
-	 * Setup Mai_User_Post class.
-	 *
-	 * @return object
-	 */
-	// function setup() {
-	// 	return new Mai_User_Post;
-	// }
 
 	/**
 	 * Add 'mai_user' as an available post type for Mai Post Grid.
