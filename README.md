@@ -136,7 +136,7 @@ add_filter( 'maiup_user_post_args', function( $args, $user_id ) {
 });
 ```
 
-## Post Type Args
+## Post type args
 **Basic post type filters**
 
 ```
