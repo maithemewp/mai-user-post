@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Plugin Name:     Mai User Post
- * Plugin URI:      https://bizbudding.com
- * Description:     A developer plugin to connect and sync a user to an individual custom post type entry.
- * Version:         0.1.0
+ * Plugin Name:       Mai User Post
+ * Plugin URI:        https://bizbudding.com
+ * GitHub Plugin URI: https://github.com/maithemewp/mai-user-post
+ * Description:       A developer plugin to connect and sync a user to an individual custom post type entry.
+ * Version:           0.2.0
  *
- * Author:          BizBudding, Mike Hemberger
- * Author URI:      https://bizbudding.com
+ * Author:            BizBudding, Mike Hemberger
+ * Author URI:        https://bizbudding.com
  */
 
 // Exit if accessed directly.
@@ -90,7 +91,7 @@ final class Mai_User_Post_Plugin {
 
 		// Plugin version.
 		if ( ! defined( 'MAI_USER_POST_VERSION' ) ) {
-			define( 'MAI_USER_POST_VERSION', '0.1.0' );
+			define( 'MAI_USER_POST_VERSION', '0.2.0' );
 		}
 
 		// Plugin Folder Path.
@@ -117,7 +118,6 @@ final class Mai_User_Post_Plugin {
 		if ( ! defined( 'MAI_USER_POST_BASENAME' ) ) {
 			define( 'MAI_USER_POST_BASENAME', dirname( plugin_basename( __FILE__ ) ) );
 		}
-
 	}
 
 	/**
@@ -128,8 +128,6 @@ final class Mai_User_Post_Plugin {
 	 * @return  void
 	 */
 	private function includes() {
-		// Include vendor libraries.
-		// require_once __DIR__ . '/vendor/autoload.php';
 		// Includes.
 		foreach ( glob( MAI_USER_POST_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
 
@@ -142,9 +140,8 @@ final class Mai_User_Post_Plugin {
 	 * @return  void
 	 */
 	public function hooks() {
-
-		add_action( 'admin_init', [ $this, 'updater' ] );
-		add_action( 'init',       [ $this, 'register_content_types' ] );
+		add_action( 'plugins_loaded', [ $this, 'updater' ] );
+		add_action( 'init',           [ $this, 'register_content_types' ] );
 
 		register_activation_hook( __FILE__, [ $this, 'activate' ] );
 		register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
@@ -266,9 +263,9 @@ final class Mai_User_Post_Plugin {
  *
  * @return object|Mai_User_Post_Plugin The one true Mai_User_Post_Plugin Instance.
  */
-function Mai_User_Post_Plugin() {
+function mai_user_post_plugin() {
 	return Mai_User_Post_Plugin::instance();
 }
 
 // Get Mai_User_Post_Plugin Running.
-Mai_User_Post_Plugin();
+mai_user_post_plugin();

@@ -192,7 +192,7 @@ function maiup_sync_user_post( $user_id ) {
 
 /**
  * Syncs user post to the user
- * when a user post is updated.
+ * when a user post is created or updated.
  *
  * @since 0.1.0
  *
@@ -206,10 +206,6 @@ function maiup_sync_user_post( $user_id ) {
  */
 function maiup_sync_post_user( $post_id, $post, $update, $post_before ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-		return;
-	}
-
-	if ( ! $update ) {
 		return;
 	}
 
