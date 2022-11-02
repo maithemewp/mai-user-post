@@ -9,7 +9,7 @@
  */
 add_action( 'user_register',        'maiup_sync_user_post', 99 );
 add_action( 'profile_update',       'maiup_sync_user_post', 99 );
-add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 );
+add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 ); // This fires for new and updated posts.
 add_action( 'delete_user',          'maiup_delete_user_post' );
 
 /**
