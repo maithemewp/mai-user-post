@@ -9,6 +9,8 @@
  */
 add_action( 'user_register',        'maiup_sync_user_post', 99 );
 add_action( 'profile_update',       'maiup_sync_user_post', 99 );
+// add_action( 'add_user_role',        'maiup_user_role_added', 99, 2 );
+add_action( 'remove_user_role',     'maiup_user_role_removed', 99, 2 );
 add_action( 'wp_after_insert_post', 'maiup_sync_post_user', 99, 4 ); // This fires for new and updated posts.
 add_action( 'delete_user',          'maiup_delete_user_post' );
 
@@ -86,15 +88,9 @@ function maiup_get_mapped_keys() {
  * @return void
  */
 function maiup_sync_user_post( $user_id ) {
-	$user_roles = maiup_get_user_roles();
-
-	if ( $user_roles ) {
-		$user_meta = get_userdata( $user_id );
-		$has_role  = (bool) array_intersect( $user_meta->roles, $user_roles );
-
-		if ( ! $has_role ) {
-			return;
-		}
+	// Bail if not a role we should sync.
+	if ( ! maiup_has_role( $user_id ) ) {
+		return;
 	}
 
 	$should_sync = apply_filters( 'maiup_should_sync', true, $user_id );
@@ -191,6 +187,52 @@ function maiup_sync_user_post( $user_id ) {
 }
 
 /**
+ * When a user role is added.
+ * This is currently unused as profile_update should handle syncing when added.
+ *
+ * @param int    $user_id The user ID.
+ * @param string $role    The new role.
+ *
+ * @return void
+ */
+function maiup_user_role_added( $user_id, $role ) {
+	$roles = maiup_get_user_roles();
+
+	if ( ! in_array( $role, $roles ) ) {
+		return;
+	}
+}
+
+/**
+ * Make user post a draft when a user role is removed.
+ *
+ * @param int    $user_id The user ID.
+ * @param string $role    The new role.
+ *
+ * @return void
+ */
+function maiup_user_role_removed( $user_id, $role ) {
+	$roles = maiup_get_user_roles();
+
+	if ( ! in_array( $role, $roles ) ) {
+		return;
+	}
+
+	$post = maiup_get_user_post( $user_id );
+
+	if ( ! $post ) {
+		return;
+	}
+
+	wp_update_post(
+		[
+			'ID'          => $post->ID,
+			'post_status' => 'draft'
+		]
+	);
+}
+
+/**
  * Syncs user post to the user
  * when a user post is created or updated.
  *
@@ -211,25 +253,21 @@ function maiup_sync_post_user( $post_id, $post, $update, $post_before ) {
 
 	$user_id = get_post_meta( $post_id, 'mai_user_id', true );
 
+	// Bail if no user ID.
 	if ( ! $user_id ) {
 		return;
 	}
 
 	$user = get_user_by( 'id', $user_id );
 
+	// Bail if no user.
 	if ( ! $user ) {
 		return;
 	}
 
-	$user_roles = maiup_get_user_roles();
-
-	if ( $user_roles ) {
-		$user_meta = get_userdata( $user_id );
-		$has_role  = (bool) array_intersect( $user_meta->roles, $user_roles );
-
-		if ( ! $has_role ) {
-			return;
-		}
+	// Bail if not a role we should sync.
+	if ( ! maiup_has_role( $user_id ) ) {
+		return;
 	}
 
 	$should_sync = apply_filters( 'maiup_should_sync', true, $user_id );
@@ -417,6 +455,26 @@ function maiup_get_user_roles() {
 	}
 
 	$user_roles = (array) apply_filters( 'maiup_user_roles', [] );
+	$user_roles = array_map( 'sanitize_key', $user_roles );
 
 	return $user_roles;
+}
+
+/**
+ * If user has a valid role.
+ *
+ * @param int $user_id
+ *
+ * @return bool
+ */
+function maiup_has_role( $user_id ) {
+	$has_role   = false;
+	$user_roles = maiup_get_user_roles();
+
+	if ( $user_roles ) {
+		$user_meta = get_userdata( $user_id );
+		$has_role  = (bool) array_intersect( $user_meta->roles, $user_roles );
+	}
+
+	return $has_role;
 }

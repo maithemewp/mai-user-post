@@ -133,7 +133,6 @@ final class Mai_User_Post_Plugin {
 	private function includes() {
 		// Includes.
 		foreach ( glob( MAI_USER_POST_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
-
 	}
 
 	/**
