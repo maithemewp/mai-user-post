@@ -524,7 +524,7 @@ function maiup_has_role( $user_id = 0 ) {
 	}
 
 	$has_role   = false;
-	$user_id    = get_current_user_id();
+	$user_id    = is_user_logged_in() ? get_current_user_id() : 0;
 	$user_roles = $user_id ? maiup_get_user_roles() : [];
 
 	if ( $user_roles ) {
