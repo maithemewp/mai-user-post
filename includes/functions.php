@@ -352,11 +352,12 @@ function maiup_sync_post_user( $post_id, $post, $update, $post_before ) {
  *
  * @since 0.1.0
  *
- * @param int $user_id The user ID.
+ * @param int   $user_id The user ID.
+ * @param array $args    The post type args.
  *
  * @return int|false
  */
-function maiup_create_user_post( $user_id ) {
+function maiup_create_user_post( $user_id, $args = [] ) {
 	$post = maiup_get_user_post( $user_id );
 
 	if ( $post ) {
@@ -366,20 +367,28 @@ function maiup_create_user_post( $user_id ) {
 	$user = get_user_by( 'id', $user_id );
 
 	if ( $user ) {
-
-		$args = [
-			'post_type'    => 'mai_user',
-			'post_author'  => $user_id,
-			'post_excerpt' => $user->description,
-			'post_status'  => 'publish',
-			'post_title'   => $user->display_name,
-			'meta_input'   => [
-				'mai_user_id' => absint( $user_id ),
+		// Parse args.
+		$args = wp_parse_args(
+			$args,
+			[
+				'post_type'    => 'mai_user',
+				'post_author'  => $user_id,
+				'post_excerpt' => $user->description,
+				'post_status'  => 'publish',
+				'post_title'   => $user->display_name,
+				'meta_input'   => [
+					'mai_user_id' => absint( $user_id ),
+				],
 			],
-		];
+		);
 
+		// Allow filtering.
 		$args = apply_filters( 'maiup_user_post_args', $args, $user_id );
 
+		// Force post type if args were passed.
+		$args['post_type'] = 'mai_user';
+
+		// Update.
 		$post_id = wp_insert_post( $args );
 
 		if ( $post_id && ! is_wp_error( $post_id ) ) {
@@ -417,8 +426,17 @@ function maiup_delete_user_post( $user_id ) {
  *
  * @return WP_User|null
  */
-function maiup_get_user_post( $user_id ) {
-	$post  = null;
+function maiup_get_user_post( $user_id = 0 ) {
+	if ( ! $user_id ) {
+		$user_id = get_current_user_id();
+	}
+
+	$post = null;
+
+	if ( ! $user_id ) {
+		return $post;
+	}
+
 	$query = new WP_Query(
 		[
 			'post_type'              => 'mai_user',
@@ -430,6 +448,7 @@ function maiup_get_user_post( $user_id ) {
 			'update_post_term_cache' => false,
 		]
 	);
+
 	if ( $query->have_posts() ) {
 		while ( $query->have_posts() ) : $query->the_post();
 			$post = get_post( get_the_ID() );
@@ -437,7 +456,31 @@ function maiup_get_user_post( $user_id ) {
 		endwhile;
 	}
 	wp_reset_postdata();
+
 	return $post;
+}
+
+/**
+ * If user is viewing their own profile.
+ *
+ * @since TBD
+ *
+ * @param int $post_id
+ *
+ * @return bool
+ */
+function maiup_is_users_post( $post_id = 0 ) {
+	if ( ! ( maiup_has_role() && is_singular( 'mai_user' ) ) ) {
+		return false;
+	}
+
+	if ( ! $post_id ) {
+		$post    = maiup_get_user_post();
+		$post_id = $post ? $post->ID : 0;
+
+	}
+
+	return get_the_ID() === $post_id;
 }
 
 /**
@@ -463,18 +506,33 @@ function maiup_get_user_roles() {
 /**
  * If user has a valid role.
  *
+ * @since 0.1.0
+ *
  * @param int $user_id
  *
  * @return bool
  */
-function maiup_has_role( $user_id ) {
+function maiup_has_role( $user_id = 0 ) {
+	static $cache = null;
+
+	if ( ! is_array( $cache ) ) {
+		$cache = [];
+	}
+
+	if ( isset( $cache[ $user_id ] ) ) {
+		return $cache[ $user_id ];
+	}
+
 	$has_role   = false;
-	$user_roles = maiup_get_user_roles();
+	$user_id    = get_current_user_id();
+	$user_roles = $user_id ? maiup_get_user_roles() : [];
 
 	if ( $user_roles ) {
 		$user_meta = get_userdata( $user_id );
 		$has_role  = (bool) array_intersect( $user_meta->roles, $user_roles );
 	}
 
-	return $has_role;
+	$cache[ $user_id ] = $has_role;
+
+	return $cache[ $user_id ];
 }
