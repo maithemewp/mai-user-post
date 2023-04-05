@@ -461,7 +461,8 @@ function maiup_get_user_post( $user_id = 0 ) {
 }
 
 /**
- * If user is viewing their own profile.
+ * If passed post_id is a user's post.
+ * Does not check if user has validated role.
  *
  * @since TBD
  *
@@ -470,17 +471,21 @@ function maiup_get_user_post( $user_id = 0 ) {
  * @return bool
  */
 function maiup_is_users_post( $post_id = 0 ) {
-	if ( ! ( maiup_has_role() && is_singular( 'mai_user' ) ) ) {
-		return false;
+	if ( ! $post_id ) {
+		$post_id = is_singular( 'mai_user' ) ? get_the_ID() : 0;
 	}
 
 	if ( ! $post_id ) {
-		$post    = maiup_get_user_post();
-		$post_id = $post ? $post->ID : 0;
-
+		return false;
 	}
 
-	return get_the_ID() === $post_id;
+	$post = maiup_get_user_post();
+
+	if ( ! $post ) {
+		return false;
+	}
+
+	return $post_id === $post->ID;
 }
 
 /**
@@ -519,12 +524,13 @@ function maiup_has_role( $user_id = 0 ) {
 		$cache = [];
 	}
 
+	$user_id = ! $user_id && is_user_logged_in() ? get_current_user_id() : 0;
+
 	if ( isset( $cache[ $user_id ] ) ) {
 		return $cache[ $user_id ];
 	}
 
 	$has_role   = false;
-	$user_id    = is_user_logged_in() ? get_current_user_id() : 0;
 	$user_roles = $user_id ? maiup_get_user_roles() : [];
 
 	if ( $user_roles ) {
