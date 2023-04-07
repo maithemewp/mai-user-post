@@ -542,3 +542,92 @@ function maiup_has_role( $user_id = 0 ) {
 
 	return $cache[ $user_id ];
 }
+
+
+/**
+ * Gets a single option value by key.
+ *
+ * @since TBD
+ *
+ * @param string $key
+ * @param mixed  $default
+ *
+ * @return mixed
+ */
+function maiup_get_option( $key, $default = null ) {
+	$options = maiup_get_options();
+	return isset( $options[ $key ] ) ? $options[ $key ] : $default;
+}
+
+/**
+ * Gets all options.
+ *
+ * @since TBD
+ *
+ * @return array
+ */
+function maiup_get_options() {
+	static $cache = null;
+
+	if ( ! is_null( $cache ) ) {
+		return $cache;
+	}
+
+	// Get all options, with defaults.
+	$options = (array) get_option( 'mai_user_post', maiup_get_options_defaults() );
+
+	// Sanitize.
+	$cache = maiup_sanitize_options( $options );
+
+	return $cache;
+}
+
+/**
+ * Gets default options.
+ *
+ * @since TBD
+ *
+ * @return array
+ */
+function maiup_get_options_defaults() {
+	static $cache = null;
+
+	if ( ! is_null( $cache ) ) {
+		return $cache;
+	}
+
+	$cache = [
+		'roles'               => [],
+		'plural'              => __( 'User Posts', 'mai-user-post' ),
+		'singular'            => __( 'User Post', 'mai-user-post' ),
+		'base'                => 'users',
+		'field_groups'        => [],
+		'woocommerce_account' => false,
+		'woocommerce_menu'    => '',
+	];
+
+	return $cache;
+}
+
+/**
+ * Parses and sanitize all options.
+ * Not cached for use when saving values in settings page.
+ *
+ * @since TBD
+ *
+ * @return array
+ */
+function maiup_sanitize_options( $options ) {
+	$options = wp_parse_args( $options, maiup_get_options_defaults() );
+
+	// Sanitize.
+	$options['roles']               = array_map( 'sanitize_key', $options['roles'] );
+	$options['plural']              = esc_html( $options['plural'] );
+	$options['singular']            = esc_html( $options['singular'] );
+	$options['base']                = sanitize_title_with_dashes( $options['base'] );
+	$options['field_groups']        = array_map( 'sanitize_key', $options['field_groups'] );
+	$options['woocommerce_account'] = rest_sanitize_boolean( $options['woocommerce_account'] );
+	$options['woocommerce_menu']    = esc_html( $options['woocommerce_menu'] );
+
+	return $options;
+}
