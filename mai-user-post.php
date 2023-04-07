@@ -91,7 +91,6 @@ final class Mai_User_Post_Plugin {
 	 * @return  void
 	 */
 	private function setup_constants() {
-
 		// Plugin version.
 		if ( ! defined( 'MAI_USER_POST_VERSION' ) ) {
 			define( 'MAI_USER_POST_VERSION', '0.2.0' );
@@ -100,11 +99,6 @@ final class Mai_User_Post_Plugin {
 		// Plugin Folder Path.
 		if ( ! defined( 'MAI_USER_POST_PLUGIN_DIR' ) ) {
 			define( 'MAI_USER_POST_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-		}
-
-		// Plugin Includes Path.
-		if ( ! defined( 'MAI_USER_POST_INCLUDES_DIR' ) ) {
-			define( 'MAI_USER_POST_INCLUDES_DIR', MAI_USER_POST_PLUGIN_DIR . 'includes/' );
 		}
 
 		// Plugin Folder URL.
@@ -132,7 +126,9 @@ final class Mai_User_Post_Plugin {
 	 */
 	private function includes() {
 		// Includes.
-		foreach ( glob( MAI_USER_POST_INCLUDES_DIR . '*.php' ) as $file ) { include $file; }
+		foreach ( glob( MAI_USER_POST_PLUGIN_DIR . 'includes/' . '*.php' ) as $file ) { include $file; }
+		// Classes.
+		foreach ( glob( MAI_USER_POST_PLUGIN_DIR . 'classes/' . '*.php' ) as $file ) { include $file; }
 	}
 
 	/**
@@ -143,6 +139,7 @@ final class Mai_User_Post_Plugin {
 	 */
 	public function hooks() {
 		add_action( 'plugins_loaded', [ $this, 'updater' ] );
+		add_action( 'plugins_loaded', [ $this, 'classes' ], 8 ); // Before default of 10, so per-site code can run on plugins_loaded default.
 		add_action( 'init',           [ $this, 'register_content_types' ] );
 
 		register_activation_hook( __FILE__, [ $this, 'activate' ] );
@@ -186,6 +183,26 @@ final class Mai_User_Post_Plugin {
 	}
 
 	/**
+	 * Instantiate classes.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	public function classes() {
+		$settings = new Mai_User_Post_Settings;
+		// $track    = new Mai_Analytics_Tracking;
+		// $content  = new Mai_Analytics_Content_Tracking;
+
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			if ( maiup_get_option( 'woocommerce_account' ) ) {
+				$account = new Mai_User_Post_WooCommerce_Account;
+			}
+		}
+	}
+
+	/**
 	 * Register content types.
 	 *
 	 * @return  void
@@ -196,9 +213,9 @@ final class Mai_User_Post_Plugin {
 		 *  Custom Post Types  *
 		 ***********************/
 
-		$plural   = apply_filters( 'maiup_post_type_plural', __( 'User Posts', 'mai-user-post' ) );
-		$singular = apply_filters( 'maiup_post_type_singular', __( 'User Post', 'mai-user-post' ) );
-		$base     = apply_filters( 'maiup_post_type_base', 'users' );
+		$plural   = apply_filters( 'maiup_post_type_plural', mai_get_option( 'plural' ) );
+		$singular = apply_filters( 'maiup_post_type_singular', mai_get_option( 'singular' ) );
+		$base     = apply_filters( 'maiup_post_type_base', mai_get_option( 'base' ) );
 
 		register_post_type( 'mai_user', apply_filters( 'maiup_post_type_args',
 			[

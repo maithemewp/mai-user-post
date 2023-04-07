@@ -47,9 +47,28 @@ function maiup_get_acf_keys() {
 		return $acf_keys;
 	}
 
-	$acf_keys = apply_filters( 'maiup_acf_keys', [] );
+	if ( ! is_array( $acf_keys ) ) {
+		$acf_keys = [];
+	}
 
-	return (array) $acf_keys;
+	if ( ! function_exists( 'acf_get_fields' ) ) {
+		return $acf_keys;
+	}
+
+	$groups = maiup_get_option( 'field_groups' );
+
+	if ( $groups ) {
+		foreach ( $groups as $group ) {
+			$fields   = acf_get_fields( 'maitowne_agent_field_group' );
+			$acf_keys = array_merge( $acf_keys, wp_list_pluck( $fields, 'key', 'name' ) );
+		}
+	}
+
+	// TODO: Old docs had these as an array of keys.
+	// Should we handle this or here or just go fix it everywhere the plugin is used, if we can remember?
+	$acf_keys = (array) apply_filters( 'maiup_acf_keys', $acf_keys );
+
+	return $acf_keys;
 }
 
 /**
