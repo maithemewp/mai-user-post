@@ -16,9 +16,30 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function __construct() {
+	function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_menu_item' ], 12 );
 		add_action( 'admin_init', [ $this, 'init' ] );
+		add_filter( 'plugin_action_links_mai-user-post/mai-user-post.php', [ $this, 'add_plugin_links' ] );
+	}
+
+	/**
+	 * Add plugin action links.
+	 *
+	 * @since TBD
+	 *
+	 * @param array $actions The existing actions.
+	 *
+	 * @return array
+	 */
+	function add_plugin_links( $actions ) {
+		$custom = [
+			'settings' => sprintf(
+				'<a href="%s">%s</a>',
+				admin_url( 'edit.php?post_type=mai_user&page=mai-user-post' ),
+				__( 'Settings', 'mai-user-post' )
+			),
+		];
+		return array_merge( $custom, $actions );
 	}
 
 	/**
@@ -28,7 +49,7 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function add_menu_item() {
+	function add_menu_item() {
 		add_submenu_page(
 			'edit.php?post_type=mai_user',
 			__( 'Mai User Post', 'mai-user-post' ), // page_title
@@ -46,7 +67,7 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function add_content() {
+	function add_content() {
 		$this->options = maiup_get_options();
 
 		echo '<div class="wrap">';
@@ -68,7 +89,7 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function init() {
+	function init() {
 		register_setting(
 			'maiup_settings_group', // option_group
 			'mai_user_post', // option_name
@@ -82,6 +103,7 @@ class Mai_User_Post_Settings {
 			'maiup-section' // page
 		);
 
+		// Plural Label.
 		add_settings_field(
 			'plural', // id
 			__( 'Plural Label', 'mai-user-post' ), // title
@@ -90,6 +112,7 @@ class Mai_User_Post_Settings {
 			'maiup_settings' // section
 		);
 
+		// Singular Label.
 		add_settings_field(
 			'singular', // id
 			__( 'Singular Label', 'mai-user-post' ), // title
@@ -98,6 +121,7 @@ class Mai_User_Post_Settings {
 			'maiup_settings' // section
 		);
 
+		// Permalink Base.
 		add_settings_field(
 			'base', // id
 			__( 'Permalink Base', 'mai-user-post' ), // title
@@ -106,6 +130,7 @@ class Mai_User_Post_Settings {
 			'maiup_settings' // section
 		);
 
+		// User Roles.
 		add_settings_field(
 			'roles', // id
 			__( 'User Roles', 'mai-user-post' ), // title
@@ -114,17 +139,23 @@ class Mai_User_Post_Settings {
 			'maiup_settings' // section
 		);
 
-		add_settings_field(
-			'field_groups', // id
-			__( 'ACF Field Groups', 'mai-user-post' ), // title
-			[ $this, 'field_groups_callback' ], // callback
-			'maiup-section', // page
-			'maiup_settings' // section
-		);
+		// ACF.
+		if ( class_exists( 'acf' ) || class_exists( 'acf_pro' ) ) {
 
+			// Field Groups.
+			add_settings_field(
+				'field_groups', // id
+				__( 'ACF Field Groups', 'mai-user-post' ), // title
+				[ $this, 'field_groups_callback' ], // callback
+				'maiup-section', // page
+				'maiup_settings' // section
+			);
+		}
 
+		// WooCommerce.
 		if ( class_exists( 'WooCommerce' ) ) {
 
+			// Account.
 			add_settings_field(
 				'woocommerce_account', // id
 				__( 'WooCommerce Account', 'mai-user-post' ), // title
@@ -133,7 +164,10 @@ class Mai_User_Post_Settings {
 				'maiup_settings' // section
 			);
 
+			// If account is enabled.
 			if ( maiup_get_option( 'woocommerce_account' ) ) {
+
+				// Menu Title.
 				add_settings_field(
 					'woocommerce_menu', // id
 					__( 'WooCommerce Menu Title', 'mai-user-post' ), // title
@@ -141,6 +175,15 @@ class Mai_User_Post_Settings {
 					'maiup-section', // page
 					'maiup_settings' // section
 				);
+
+				// Products.
+				// add_settings_field(
+				// 	'woocommerce_products', // id
+				// 	__( 'WooCommerce Products', 'mai-user-post' ), // title
+				// 	[ $this, 'woocommerce_products_callback' ], // callback
+				// 	'maiup-section', // page
+				// 	'maiup_settings' // section
+				// );
 			}
 		}
 	}
@@ -148,11 +191,13 @@ class Mai_User_Post_Settings {
 	/**
 	 * Sanitized saved values.
 	 *
+	 * @since TBD
+	 *
 	 * @param array $input
 	 *
 	 * @return array
 	 */
-	public function maiup_sanitize( $input ) {
+	function maiup_sanitize( $input ) {
 		return maiup_sanitize_options( $input );
 	}
 
@@ -161,17 +206,22 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return string
 	 */
-	public function maiup_section_info() {}
+	function maiup_section_info() {
+		?>
+		<style>
+		.form-table td > * {
+			max-width: 360px;
+		}
 
-	/**
-	 * Setting callback.
-	 *
-	 * @since TBD
-	 *
-	 * @return void
-	 */
-	public function plural_callback() {
-		printf( '<input class="regular-text" type="text" name="mai_user_post[plural]" id="plural" value="%s">', maiup_get_option( 'plural' ) );
+		.form-table td > *:not(input),
+		.form-table input[type="text"] {
+			width: 100%;
+		}
+
+		.form-table p.description {
+			margin-top: 1em;
+		}
+		<?php
 	}
 
 	/**
@@ -181,8 +231,8 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function singular_callback() {
-		printf( '<input class="regular-text" type="text" name="mai_user_post[singular]" id="singular" value="%s">', maiup_get_option( 'singular' ) );
+	function plural_callback() {
+		printf( '<input type="text" name="mai_user_post[plural]" id="plural" value="%s">', maiup_get_option( 'plural' ) );
 	}
 
 	/**
@@ -192,9 +242,8 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function base_callback() {
-		printf( '<input class="regular-text" type="text" name="mai_user_post[base]" id="base" value="%s">', maiup_get_option( 'base' ) );
-		printf( '<p>%s</p>', __( 'Visit Dashboard > Settings > Permalinks and hit "Save Changes" to flush permalinks after changing this setting.', 'mai-user-post' ) );
+	function singular_callback() {
+		printf( '<input type="text" name="mai_user_post[singular]" id="singular" value="%s">', maiup_get_option( 'singular' ) );
 	}
 
 	/**
@@ -204,21 +253,42 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function roles_callback() {
+	function base_callback() {
+		printf( '<input type="text" name="mai_user_post[base]" id="base" value="%s">', maiup_get_option( 'base' ) );
+		printf( '<p class="description">%s</p>', __( 'Visit Dashboard > Settings > Permalinks and hit "Save Changes" to flush permalinks after changing this setting.', 'mai-user-post' ) );
+	}
+
+	/**
+	 * Setting callback.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function roles_callback() {
+		// Get roles and stored values.
 		$roles   = wp_roles()->roles;
 		$options = maiup_get_option( 'roles' );
 
-		printf( '<p>%s</p>', __( 'User roles that have a synced post.', 'maitowne' ) );
-		echo '<ul style="max-width:25em;height:10em;overflow-y:auto;resize:vertical;padding:1em;background:white;">';
-		foreach ( $roles as $key => $role ) {
-			printf(
-				'<li><label><input type="checkbox" name="mai_user_post[roles][]" value="%s"%s> %s</label><li>',
-				$key,
-				in_array( $key, $options ) ? ' checked' : '',
-				$role['name']
-			);
+		// Selected.
+		if ( $options ) {
+			printf( '<p>%s: %s</p>', __( 'Currently saved', 'mai-user-post' ), implode( ', ', $options ) );
 		}
+
+		// Render setting.
+		echo '<ul style="max-width:25em;height:10em;overflow-y:auto;resize:vertical;padding:1em;background:white;">';
+			foreach ( $roles as $key => $role ) {
+				printf(
+					'<li><label><input type="checkbox" name="mai_user_post[roles][]" value="%s"%s> %s</label></li>',
+					$key,
+					in_array( $key, $options ) ? ' checked' : '',
+					$role['name']
+				);
+			}
 		echo '</ul>';
+
+		// Description.
+		printf( '<p class="description">%s</p>', __( 'User roles that have a synced post.', 'mai-user-post' ) );
 	}
 
 	/**
@@ -228,26 +298,55 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function field_groups_callback() {
+	function field_groups_callback() {
+		// Get field groups.
 		$groups = function_exists( 'acf_get_field_groups' ) ? acf_get_field_groups() : [];
 
+		// Bail if no groups.
 		if ( ! $groups ) {
-			printf( '<p>%s<p>', __( 'No ACF Field Groups available', 'mai-user-post' ) );
+			printf( '<p>%s<p>', __( 'No ACF Field Groups available.', 'mai-user-post' ) );
+			return;
 		}
 
+		// Get groups and saved options.
+		$groups  = wp_list_pluck( $groups, 'title', 'key' );
 		$options = maiup_get_option( 'field_groups' );
 
-		printf( '<p>%s</p>', __( 'Additional ACF field groups used for editing a post.', 'maitowne' ) );
-		echo '<ul style="max-width:25em;height:10em;overflow-y:auto;resize:vertical;padding:1em;background:white;">';
-		foreach ( $groups as $group ) {
-			printf(
-				'<li><label><input type="checkbox" name="mai_user_post[field_groups][]" value="%s"%s> %s</label><li>',
-				$group['key'],
-				in_array( $group['key'], $options ) ? ' checked' : '',
-				$group['title']
-			);
+		// Selected.
+		if ( $options ) {
+			$names = [];
+
+			// Loop through saved values.
+			foreach ( $options as $group ) {
+				// Skip if not in registered groups.
+				if ( ! isset( $groups[ $group ] ) ) {
+					continue;
+				}
+
+				// Add to names.
+				$names[] = $groups[ $group ];
+			}
+
+			// Output selected.
+			if ( $names ) {
+				printf( '<p>%s: %s</p>', __( 'Currently saved', 'mai-user-post' ), implode( ', ', $names ) );
+			}
 		}
+
+		// Render setting.
+		echo '<ul style="max-width:25em;height:10em;overflow-y:auto;resize:vertical;padding:1em;background:white;">';
+			foreach ( $groups as $key => $title ) {
+				printf(
+					'<li><label><input type="checkbox" name="mai_user_post[field_groups][]" value="%s"%s> %s</label></li>',
+					$key,
+					in_array( $key, $options ) ? ' checked' : '',
+					$title
+				);
+			}
 		echo '</ul>';
+
+		// Description.
+		printf( '<p class="description">%s</p>', __( 'Additional ACF field groups used for editing a post.', 'mai-user-post' ) );
 	}
 
 	/**
@@ -257,7 +356,7 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function woocommerce_account_callback() {
+	function woocommerce_account_callback() {
 		$option = maiup_get_option( 'woocommerce_account' );
 
 		printf(
@@ -265,6 +364,10 @@ class Mai_User_Post_Settings {
 			$option ? ' checked' : '',
 			__( 'Enable post editing in WooCommerce Account', 'mai-analytics' )
 		);
+
+		// Description.
+		printf( '<p class="description">%s</p>', __( 'Refresh the page after enabling this setting and saving.', 'mai-user-post' ) );
+
 	}
 
 	/**
@@ -274,7 +377,35 @@ class Mai_User_Post_Settings {
 	 *
 	 * @return void
 	 */
-	public function woocommerce_menu_callback() {
-		printf( '<input class="regular-text" type="text" name="mai_user_post[woocommerce_menu]" id="woocommerce_menu" placeholder="%s" value="%s">', maiup_get_option( 'singular' ) . ' ' . __( 'Details', 'mai-user-post' ), maiup_get_option( 'woocommerce_menu' ) );
+	function woocommerce_menu_callback() {
+		printf( '<input type="text" name="mai_user_post[woocommerce_menu]" id="woocommerce_menu" placeholder="%s" value="%s">', maiup_get_option( 'singular' ) . ' ' . __( 'Details', 'mai-user-post' ), maiup_get_option( 'woocommerce_menu' ) );
+	}
+
+	/**
+	 * Setting callback.
+	 * Currently unused.
+	 *
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	function woocommerce_products_callback() {
+		wp_enqueue_script( 'wc-enhanced-select' );
+		wp_enqueue_script( 'selectWoo' );
+		wp_enqueue_style( 'woocommerce_admin_styles' );
+		wp_enqueue_style( 'select2' );
+
+		printf( '<select class="wc-product-search" multiple="multiple" id="woocommerce_products" name="mai_user_post[woocommerce_products][]" data-placeholder="%s" data-action="woocommerce_json_search_products_and_variations">', esc_attr( 'Search for a product&hellip;', 'woocommerce' ) );
+			$product_ids = (array) maiup_get_option( 'woocommerce_products' );
+
+			foreach ( $product_ids as $product_id ) {
+				$product = wc_get_product( $product_id );
+
+				if ( is_object( $product ) ) {
+					echo '<option value="' . esc_attr( $product_id ) . '"' . selected( true, true, false ) . '>' . wp_kses_post( $product->get_formatted_name() ) . '</option>';
+				}
+			}
+		echo '</select>';
+		printf( '<p class="description">%s</p>', __( 'Require purchase of one of these products to have a user post.', 'mai-user-post' ) );
 	}
 }
