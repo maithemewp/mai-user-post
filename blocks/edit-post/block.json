@@ -1,5 +1,4 @@
 {
-	"apiVersion": 3,
 	"name": "acf/mai-user-post-edit",
 	"title": "Mai User Post Edit",
 	"description": "Edit your user profile/post.",
@@ -8,7 +7,7 @@
 	"icon": "user",
 	"textdomain": "mai-user-post",
 	"acf": {
-		"mode": "preview"
+		"blockVersion": 3
 	},
 	"supports": {
 		"align": false
