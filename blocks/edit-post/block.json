@@ -1,0 +1,16 @@
+{
+	"apiVersion": 3,
+	"name": "acf/mai-user-post-edit",
+	"title": "Mai User Post Edit",
+	"description": "Edit your user profile/post.",
+	"category": "widgets",
+	"keywords": [ "user", "edit", "post" ],
+	"icon": "user",
+	"textdomain": "mai-user-post",
+	"acf": {
+		"mode": "preview"
+	},
+	"supports": {
+		"align": false
+	}
+}
